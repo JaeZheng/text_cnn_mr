@@ -1,7 +1,6 @@
 import numpy as np
 import re
-import itertools
-from collections import Counter
+import time
 
 
 def clean_str(string):
@@ -63,3 +62,14 @@ def batch_iter(data, batch_size, num_epochs, shuffle=True):
             start_index = batch_num * batch_size
             end_index = min((batch_num + 1) * batch_size, data_size)
             yield shuffled_data[start_index:end_index]
+
+
+# 返回格式化时间戳，打印日志用
+def format_time():
+    timestamp = time.localtime(time.time())
+    fmt_time = str(timestamp.tm_year)
+    fmt_time += str(timestamp.tm_mon) if timestamp.tm_mon > 9 else '0' + str(timestamp.tm_mon)
+    fmt_time += str(timestamp.tm_mday) if timestamp.tm_mday > 9 else '0' + str(timestamp.tm_mday)
+    fmt_time += str(timestamp.tm_hour) if timestamp.tm_hour > 9 else '0' + str(timestamp.tm_hour)
+    fmt_time += str(timestamp.tm_min) if timestamp.tm_min > 9 else '0' + str(timestamp.tm_min)
+    return fmt_time
