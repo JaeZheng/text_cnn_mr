@@ -3,13 +3,13 @@
 import tensorflow as tf
 import numpy as np
 import os
-import time
 import datetime
 import data_helpers
 from text_cnn import TextCNN
 from tensorflow.contrib import learn
 from data_helpers import format_time
 from Logger import Logger
+import argparse
 
 # Parameters
 # ==================================================
@@ -24,7 +24,7 @@ tf.flags.DEFINE_string("positive_data_file", "./data/rt-polaritydata/rt-polarity
 tf.flags.DEFINE_string("negative_data_file", "./data/rt-polaritydata/rt-polarity.neg", "Data source for the negative data.")
 
 # Model Hyperparameters
-tf.flags.DEFINE_integer("embedding_dim", 128, "Dimensionality of character embedding (default: 128)")
+tf.flags.DEFINE_integer("embedding_dim", 300, "Dimensionality of character embedding (default: 128)")
 tf.flags.DEFINE_string("filter_sizes", "3,4,5", "Comma-separated filter sizes (default: '3,4,5')")
 tf.flags.DEFINE_integer("num_filters", 128, "Number of filters per filter size (default: 128)")
 tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")
@@ -32,7 +32,7 @@ tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularization lambda (default: 
 
 # Training parameters
 tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (default: 64)")
-tf.flags.DEFINE_integer("num_epochs", 200, "Number of training epochs (default: 200)")
+tf.flags.DEFINE_integer("num_epochs", 100, "Number of training epochs (default: 200)")
 tf.flags.DEFINE_integer("evaluate_every", 100, "Evaluate model on dev set after this many steps (default: 100)")
 tf.flags.DEFINE_integer("checkpoint_every", 100, "Save model after this many steps (default: 100)")
 tf.flags.DEFINE_integer("num_checkpoints", 5, "Number of checkpoints to store (default: 5)")
@@ -46,6 +46,7 @@ print("\nParameters:")
 for attr, value in sorted(FLAGS.__flags.items()):
     logger.info("{}={}".format(attr.upper(), value))
 print("")
+
 
 def preprocess():
     # Data Preparation
@@ -77,6 +78,7 @@ def preprocess():
     logger.info("Vocabulary Size: {:d}".format(len(vocab_processor.vocabulary_)))
     logger.info("Train/Dev split: {:d}/{:d}".format(len(y_train), len(y_dev)))
     return x_train, y_train, vocab_processor, x_dev, y_dev
+
 
 def train(x_train, y_train, vocab_processor, x_dev, y_dev):
     # Training
@@ -194,8 +196,25 @@ def train(x_train, y_train, vocab_processor, x_dev, y_dev):
                     print("Saved model checkpoint to {}\n".format(path))
 
 def main(argv=None):
+    print("main...")
     x_train, y_train, vocab_processor, x_dev, y_dev = preprocess()
     train(x_train, y_train, vocab_processor, x_dev, y_dev)
 
 if __name__ == '__main__':
+    # step1 get paramater
+    parse = argparse.ArgumentParser(description='Paramaters for construct TextCNN Model')
+
+    # 取bool值的方式添加互斥的参数
+    # group_static = parse.add_mutually_exclusive_group(required=True)
+    # group_static.add_argument('--static', dest='static_flag', action='store_true', help='use static Text_CNN')
+    # group_static.add_argument('--nonstatic', dest='static_flag', action='store_false', help='use nonstatic Text_CNN')
+
+    group_word_vec = parse.add_mutually_exclusive_group(required=True)
+    group_word_vec.add_argument('--word2vec', dest='wordvec_flag', action='store_true', help='word_vec is word2vec')
+    group_word_vec.add_argument('--rand', dest='wordvec_flag', action='store_false', help='word_vec is rand')
+
+    args = parse.parse_args()
+
+    print(args.wordvec_flag)
+
     tf.app.run()
