@@ -3,13 +3,13 @@
 import tensorflow as tf
 import numpy as np
 import os
-import datetime
 import data_helpers
 from text_cnn import TextCNN
 from tensorflow.contrib import learn
-from data_helpers import format_time
+from data_helpers import format_time, getWordsVect
 from Logger import Logger
 import argparse
+import pickle
 
 # Parameters
 # ==================================================
@@ -32,7 +32,7 @@ tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularization lambda (default: 
 
 # Training parameters
 tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (default: 64)")
-tf.flags.DEFINE_integer("num_epochs", 100, "Number of training epochs (default: 200)")
+tf.flags.DEFINE_integer("num_epochs", 50, "Number of training epochs (default: 200)")
 tf.flags.DEFINE_integer("evaluate_every", 100, "Evaluate model on dev set after this many steps (default: 100)")
 tf.flags.DEFINE_integer("checkpoint_every", 100, "Save model after this many steps (default: 100)")
 tf.flags.DEFINE_integer("num_checkpoints", 5, "Number of checkpoints to store (default: 5)")
@@ -91,7 +91,9 @@ def train(x_train, y_train, vocab_processor, x_dev, y_dev):
         sess = tf.Session(config=session_conf)
         with sess.as_default():
             cnn = TextCNN(
-                sequence_length=x_train.shape[1],
+                word_vec=W_list,
+                static_flag=static_flag,
+                sequence_length=sentence_max_len,
                 num_classes=y_train.shape[1],
                 vocab_size=len(vocab_processor.vocabulary_),
                 embedding_size=FLAGS.embedding_dim,
@@ -174,7 +176,6 @@ def train(x_train, y_train, vocab_processor, x_dev, y_dev):
                 step, summaries, loss, accuracy = sess.run(
                     [global_step, dev_summary_op, cnn.loss, cnn.accuracy],
                     feed_dict)
-                time_str = datetime.datetime.now().isoformat()
                 logger.info("step {}, loss {:g}, acc {:g}".format(step, loss, accuracy))
                 if writer:
                     writer.add_summary(summaries, step)
@@ -188,33 +189,50 @@ def train(x_train, y_train, vocab_processor, x_dev, y_dev):
                 train_step(x_batch, y_batch)
                 current_step = tf.train.global_step(sess, global_step)
                 if current_step % FLAGS.evaluate_every == 0:
-                    print("\nEvaluation:")
+                    logger.info("\nEvaluation:")
                     dev_step(x_dev, y_dev, writer=dev_summary_writer)
                     print("")
                 if current_step % FLAGS.checkpoint_every == 0:
                     path = saver.save(sess, checkpoint_prefix, global_step=current_step)
-                    print("Saved model checkpoint to {}\n".format(path))
+                    logger.info("Saved model checkpoint to {}\n".format(path))
+
 
 def main(argv=None):
-    print("main...")
     x_train, y_train, vocab_processor, x_dev, y_dev = preprocess()
     train(x_train, y_train, vocab_processor, x_dev, y_dev)
 
+
 if __name__ == '__main__':
-    # step1 get paramater
+    # step1 get parameter
     parse = argparse.ArgumentParser(description='Paramaters for construct TextCNN Model')
 
     # 取bool值的方式添加互斥的参数
-    # group_static = parse.add_mutually_exclusive_group(required=True)
-    # group_static.add_argument('--static', dest='static_flag', action='store_true', help='use static Text_CNN')
-    # group_static.add_argument('--nonstatic', dest='static_flag', action='store_false', help='use nonstatic Text_CNN')
+    group_static = parse.add_mutually_exclusive_group(required=True)
+    group_static.add_argument('--static', dest='static_flag', action='store_true', help='use static Text_CNN')
+    group_static.add_argument('--nonstatic', dest='static_flag', action='store_false', help='use nonstatic Text_CNN')
 
     group_word_vec = parse.add_mutually_exclusive_group(required=True)
     group_word_vec.add_argument('--word2vec', dest='wordvec_flag', action='store_true', help='word_vec is word2vec')
     group_word_vec.add_argument('--rand', dest='wordvec_flag', action='store_false', help='word_vec is rand')
 
     args = parse.parse_args()
+    static_flag = args.static_flag
 
-    print(args.wordvec_flag)
+    # step2 load data
+    print('load data. . .')
+    X = pickle.load(open('data/word_vec.p', 'rb'))
+    word_vecs_rand, word_vecs, word_cab, sentence_max_len, revs = X[0], X[1], X[2], X[3], X[4]
+
+    print('load data finish. . .')
+    # configuration tf
+    filter_sizes = [3, 4, 5]
+    # use word2vec or not
+    W = word_vecs_rand
+    if args.wordvec_flag:
+        W = word_vecs
+        pass
+    
+    # pdb.set_trace()
+    word_ids, W_list = getWordsVect(W)
 
     tf.app.run()

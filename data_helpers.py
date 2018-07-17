@@ -118,7 +118,7 @@ def load_binary_vec(fname, vocab):
 
 # load MR data —— Movie reviews with one sentence per review.
 # Classification involves detecting positive/negative reviews
-def load_data_k_cv(folder,cv=10,clear_flag=True):
+def load_data_k_cv(folder, cv=10, clear_flag=True):
     pos_file = folder[0]
     neg_file = folder[1]
 
@@ -214,20 +214,20 @@ def get_index_by_sentence_list(word_ids, sentence_list, maxlen=56):
     return np.array(indexs)
 
 
-def pad_sentences(data,maxlen=56,values=0.,vec_size = 300):
+def pad_sentences(data, max_len=56, values=0., vec_size=300):
     """padding to max length
     :param data:要扩展的数据集
     :param maxlen:扩展的h长度
     :param values:默认的值
     """
     length = len(data)
-    if length < maxlen:
-        for i in range(maxlen - length):
+    if length < max_len:
+        for i in range(max_len - length):
             data.append(np.array([values]*vec_size))
     return data
 
 
-def get_train_test_data1(word_vecs,revs,cv_id=0,sent_length = 56,default_values=0.,vec_size = 300):
+def get_train_test_data1(word_vecs, revs, cv_id=0,sent_length=56, default_values=0., vec_size = 300):
     """
     获取的训练数据和测试数据是直接的数据
     :param revs:
@@ -257,14 +257,13 @@ def get_train_test_data1(word_vecs,revs,cv_id=0,sent_length = 56,default_values=
     train_sentence_list = data_set_cv_train['text'].tolist()
     test_sentence_list = data_set_cv_test['text'].tolist()
 
-
     train_x = get_vec_by_sentence_list(word_vecs,train_sentence_list,sent_length,default_values,vec_size)
     test_x = get_vec_by_sentence_list(word_vecs,test_sentence_list,sent_length,default_values,vec_size)
 
-    return train_x,train_y,test_x,test_y
+    return train_x, train_y, test_x, test_y
 
 
-def get_train_test_data2(word_ids,revs,cv_id=0,sent_length = 56):
+def get_train_test_data2(word_ids, revs, cv_id=0, sent_length=56):
     data_set_df = pd.DataFrame(revs)
 
     # DataFrame
@@ -290,7 +289,7 @@ def get_train_test_data2(word_ids,revs,cv_id=0,sent_length = 56):
     train_x = get_index_by_sentence_list(word_ids,train_sentence_list,sent_length)
     test_x = get_index_by_sentence_list(word_ids,test_sentence_list,sent_length)
 
-    return train_x,train_y,test_x,test_y
+    return train_x, train_y, test_x, test_y
 
 
 # 对0，1取反
@@ -327,14 +326,13 @@ if __name__ == '__main__':
     print (len(list(word_vecs.keys())))
     print('finish word2vec load !!!')
 
-    #对未登录词操作
-    add_unexist_word_vec(word_vecs,word_cab)
+    # 对未登录词操作
+    add_unexist_word_vec(word_vecs, word_cab)
 
     # CNN-rand对应的词向量表
     word_vecs_rand = {}
+    add_unexist_word_vec(word_vecs_rand, word_cab)
 
-    add_unexist_word_vec(word_vecs_rand,word_cab)
-
-    #将数据数据集对应的词向量保存好
-    pickle.dump([word_vecs_rand,word_vecs,word_cab,sentence_max_len,revs],open('data/word_vec.p','wb'))
+    # 将数据数据集对应的词向量保存好
+    pickle.dump([word_vecs_rand, word_vecs, word_cab, sentence_max_len, revs], open('data/word_vec.p', 'wb'))
     pass
