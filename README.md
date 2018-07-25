@@ -30,9 +30,11 @@
 1. Run `eval.py` to evaluate model. The default config is to evaluate on training data. You can make your own testing data and modify the tf flags `eval_train` to evaluate model on testing data.
 2. Argument `--checkpoint_dir` assign model's path, can be modified to use different trained model.
 3. I trained 3 models (rand, word2vec-static, word2vec-nonstatic)，each model was trained with 20 epochs. Their accuracy on training data was showed as follows:
+
 | Rand | W2v-static | W2v-nonstatic |
 | --- | --- | --- |
 |97.477%|96.999%|97.533%|
+
 
 ## References
 
